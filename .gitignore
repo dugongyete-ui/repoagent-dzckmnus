@@ -1,0 +1,27 @@
+# Local environments and secrets
+.env
+.env.*
+!.env.example
+
+# Python caches and test artifacts
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Frontend dependencies and generated output
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Logs and local runtime output
+*.log
+*.pid
+
+# Editor and OS metadata
+.vscode/
+.idea/
+.DS_Store

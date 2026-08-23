@@ -1,0 +1,94 @@
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: |
+          {
+            "message": "Saya akan membuat file lalu memverifikasi isinya.",
+            "goal": "Membuat dan membaca kembali smoke-test.txt",
+            "title": "Verifikasi file smoke test",
+            "steps": [
+              {
+                "id": "verify-file",
+                "description": "Buat smoke-test.txt di home sandbox, isi teks yang diminta, baca kembali, dan laporkan hasilnya."
+              }
+            ]
+          }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: message_notify_user
+              arguments: |
+                {
+                  "text": "Saya mulai membuat file dan akan membaca kembali isinya untuk verifikasi."
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: file_write
+              arguments: |
+                {
+                  "file": "/tmp/dzeck-users-local/local_admin/smoke-test.txt",
+                  "content": "uji lifecycle agent berhasil",
+                  "append": false,
+                  "leading_newline": false,
+                  "trailing_newline": true
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: file_read
+              arguments: |
+                {
+                  "file": "/tmp/dzeck-users-local/local_admin/smoke-test.txt"
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: |
+          {
+            "success": true,
+            "result": "smoke-test.txt berhasil dibuat dan dibaca kembali. Isinya sama dengan teks yang diminta: uji lifecycle agent berhasil.",
+            "attachments": ["/tmp/dzeck-users-local/local_admin/smoke-test.txt"]
+          }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: |
+          {
+            "steps": []
+          }
+      finish_reason: stop
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: |
+          {
+            "message": "Selesai. smoke-test.txt berhasil dibuat dan dibaca kembali; isinya adalah: uji lifecycle agent berhasil.",
+            "attachments": ["/tmp/dzeck-users-local/local_admin/smoke-test.txt"]
+          }
+      finish_reason: stop

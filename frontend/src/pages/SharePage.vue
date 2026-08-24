@@ -250,21 +250,27 @@ const handleToolEvent = (toolData: ToolEventData) => {
 
 // Handle step event
 const handleStepEvent = (stepData: StepEventData) => {
+  const normalizedStatus = stepData.status === 'started' ? 'running' : stepData.status;
   const lastStep = getLastStep();
-  if (stepData.status === 'running') {
+  if (normalizedStatus === 'running') {
     messages.value.push({
       type: 'step',
       content: {
         ...stepData,
+        status: normalizedStatus,
         tools: []
       } as StepContent,
     });
-  } else if (stepData.status === 'completed') {
-    if (lastStep) {
-      lastStep.status = stepData.status;
+  } else if (normalizedStatus === 'completed' || normalizedStatus === 'failed') {
+    const matchingStep = messages.value
+      .filter(message => message.type === 'step')
+      .find(message => (message.content as StepContent).id === stepData.id)?.content as StepContent | undefined;
+    if (matchingStep) {
+      matchingStep.status = normalizedStatus;
+    } else if (lastStep) {
+      lastStep.status = normalizedStatus;
     }
-  } else if (stepData.status === 'failed') {
-    isLoading.value = false;
+    if (normalizedStatus === 'failed') isLoading.value = false;
   }
 }
 
@@ -287,7 +293,25 @@ const handleTitleEvent = (titleData: TitleEventData) => {
 
 // Handle plan event
 const handlePlanEvent = (planData: PlanEventData) => {
-  plan.value = planData;
+  const previousSteps = plan.value?.steps ?? [];
+  const terminalById = new Map(
+    previousSteps
+      .filter(step => step.status === 'completed' || step.status === 'failed')
+      .map(step => [step.id, step.status])
+  );
+  const terminalByDescription = new Map(
+    previousSteps
+      .filter(step => step.status === 'completed' || step.status === 'failed')
+      .map(step => [step.description, step.status])
+  );
+  plan.value = {
+    ...planData,
+    steps: planData.steps.map(step => {
+      if (step.status !== 'pending') return step;
+      const preservedStatus = terminalById.get(step.id) || terminalByDescription.get(step.description);
+      return preservedStatus ? { ...step, status: preservedStatus } : step;
+    }),
+  };
 }
 
 // Main event handler function

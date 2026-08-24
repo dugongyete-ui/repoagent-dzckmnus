@@ -392,43 +392,44 @@ const handleToolEvent = (toolData: ToolEventData) => {
 // Sync a step's status into plan.value.steps so PlanPanel stays up-to-date.
 // Uses positional matching (first-pending / first-running) instead of ID matching
 // because the planner LLM may regenerate step IDs after each plan update.
-const syncStepToPlan = (status: string) => {
+const syncStepToPlan = (stepData: StepEventData) => {
   if (!plan.value) return;
-  if (status === 'running') {
-    // Mark the first pending step as running
-    const pendingStep = plan.value.steps.find(s => s.status === 'pending');
-    if (pendingStep) pendingStep.status = 'running';
-  } else if (status === 'completed') {
-    // Mark the first running step as completed
-    const runningStep = plan.value.steps.find(s => s.status === 'running');
-    if (runningStep) runningStep.status = 'completed';
-  } else if (status === 'failed') {
-    // Mark the first running step as failed
-    const runningStep = plan.value.steps.find(s => s.status === 'running');
-    if (runningStep) runningStep.status = 'failed';
+  const status = stepData.status === 'started' ? 'running' : stepData.status;
+  let target = plan.value.steps.find(s => s.id === stepData.id);
+  if (!target && (status === 'running' || status === 'completed' || status === 'failed')) {
+    target = plan.value.steps.find(s => s.status === 'running')
+      || plan.value.steps.find(s => s.status === 'pending');
+  }
+  if (target && (status === 'running' || status === 'completed' || status === 'failed')) {
+    target.status = status;
   }
 }
 
 // Handle step event
 const handleStepEvent = (stepData: StepEventData) => {
+  const normalizedStatus = stepData.status === 'started' ? 'running' : stepData.status;
   const lastStep = getLastStep();
-  if (stepData.status === 'running') {
+  if (normalizedStatus === 'running') {
     messages.value.push({
       type: 'step',
       content: {
         ...stepData,
+        status: normalizedStatus,
         tools: []
       } as StepContent,
     });
-    syncStepToPlan('running');
-  } else if (stepData.status === 'completed') {
-    if (lastStep) {
-      lastStep.status = stepData.status;
+    syncStepToPlan(stepData);
+  } else if (normalizedStatus === 'completed' || normalizedStatus === 'failed') {
+    const matchingStep = messages.value
+      .filter(message => message.type === 'step')
+      .find(message => (message.content as StepContent).id === stepData.id)?.content as StepContent | undefined;
+    if (matchingStep) {
+      matchingStep.status = normalizedStatus;
+    } else if (lastStep) {
+      lastStep.status = normalizedStatus;
     }
-    syncStepToPlan('completed');
-  } else if (stepData.status === 'failed') {
-    isLoading.value = false;
-    syncStepToPlan('failed');
+    if (normalizedStatus === 'failed') isLoading.value = false;
+    syncStepToPlan(stepData);
   }
 }
 
@@ -451,7 +452,25 @@ const handleTitleEvent = (titleData: TitleEventData) => {
 
 // Handle plan event
 const handlePlanEvent = (planData: PlanEventData) => {
-  plan.value = planData;
+  const previousSteps = plan.value?.steps ?? [];
+  const terminalById = new Map(
+    previousSteps
+      .filter(step => step.status === 'completed' || step.status === 'failed')
+      .map(step => [step.id, step.status])
+  );
+  const terminalByDescription = new Map(
+    previousSteps
+      .filter(step => step.status === 'completed' || step.status === 'failed')
+      .map(step => [step.description, step.status])
+  );
+  plan.value = {
+    ...planData,
+    steps: planData.steps.map(step => {
+      if (step.status !== 'pending') return step;
+      const preservedStatus = terminalById.get(step.id) || terminalByDescription.get(step.description);
+      return preservedStatus ? { ...step, status: preservedStatus } : step;
+    }),
+  };
 }
 
 // Main event handler function

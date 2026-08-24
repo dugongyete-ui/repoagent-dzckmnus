@@ -149,6 +149,8 @@ def test_execution_prompts_format_with_scoped_user_home():
     execution = EXECUTION_PROMPT.format(
         step="Read one file",
         message="test",
+        plan='{"steps":[{"id":"1","description":"Read one file","status":"pending"}]}',
+        completed_steps="(none)",
         attachments="[]",
         language="English",
         user_home=user_home,
@@ -284,7 +286,7 @@ def test_tool_wrapper_drops_unexpected_arguments(monkeypatch):
     assert "listed" in result.content
 
 
-def test_planner_empty_update_preserves_pending_steps():
+def test_planner_empty_update_removes_obsolete_pending_steps():
     from app.domain.services.agents.planner import PlannerAgent
 
     planner = PlannerAgent.__new__(PlannerAgent)
@@ -310,8 +312,8 @@ def test_planner_empty_update_preserves_pending_steps():
 
     events = asyncio.run(run())
     assert len(events) == 1
-    assert [item.id for item in plan.steps] == ["1", "2", "3"]
-    assert plan.get_next_step().id == "2"
+    assert [item.id for item in plan.steps] == ["1"]
+    assert plan.get_next_step() is None
 
 
 def test_step_message_and_plan_status_are_preserved_in_sse():

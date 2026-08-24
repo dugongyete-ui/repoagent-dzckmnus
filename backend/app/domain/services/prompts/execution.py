@@ -17,6 +17,12 @@ You are executing this task step:
 User request:
 {message}
 
+Current plan and execution state:
+{plan}
+
+Evidence already collected by completed steps:
+{completed_steps}
+
 Attachments already available to the agent:
 {attachments}
 
@@ -24,6 +30,10 @@ Working language: {language}
 User sandbox home: {user_home}
 
 Choose the next action based on the actual goal and current evidence. You may use any suitable available tool, including no tool when synthesis is sufficient. Do not force a particular tool order, tool count, message wording, or numbered workflow. Keep progress updates meaningful and proportional. Verify important results when the task calls for verification, and report limitations plainly. Complete the step yourself when possible; do not ask the user to perform work that the tools can perform.
+
+Before using a search or browser tool, inspect the completed-step evidence above.
+Do not repeat a successful query, URL visit, or fact collection from an earlier
+step. If the needed information is already present, synthesize it instead.
 """
 
 SUMMARIZE_STREAM_PROMPT = """Synthesize the completed task for the user. Use the user's language and report what was actually done, the key result, relevant files or links, and any material limitation. Be concise for a simple task and more detailed only when the work warrants it. Do not repeat the entire tool transcript, invent evidence, or claim success for an incomplete or failed result."""

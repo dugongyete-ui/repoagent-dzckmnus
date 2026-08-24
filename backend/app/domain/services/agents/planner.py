@@ -357,10 +357,17 @@ class PlannerAgent(BaseAgent):
                 updated_plan = Plan.model_validate(parsed_response)
                 new_steps = [Step.model_validate(step) for step in updated_plan.steps]
                 if not new_steps:
-                    logger.warning(
-                        "Planner returned an empty pending-step update for plan %s; preserving existing steps",
+                    # An empty update is meaningful: the planner is telling us
+                    # that no uncompleted work remains. Keeping the old pending
+                    # steps here causes the flow to execute the same research or
+                    # navigation work again on the next loop iteration.
+                    completed_steps = [existing for existing in plan.steps if existing.is_done()]
+                    logger.info(
+                        "Planner completed plan %s; removing %d obsolete pending steps",
                         getattr(plan, "id", "unknown"),
+                        len(plan.steps) - len(completed_steps),
                     )
+                    plan.steps = completed_steps
                     yield PlanEvent(status=PlanStatus.UPDATED, plan=plan)
                     return
                 

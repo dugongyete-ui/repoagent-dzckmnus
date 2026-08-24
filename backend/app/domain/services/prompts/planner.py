@@ -111,6 +111,14 @@ Note:
 - Delete the step if it is completed or not necessary
 - Carefully read the step result to determine if it is successful, if not, change the following steps
 - According to the step result, you need to update the plan steps accordingly
+- The completed step result is authoritative evidence. Do not create another
+  search, browser navigation, page visit, or verification step for information
+  that was already successfully collected.
+- Reuse facts, URLs, and findings from completed steps. Add a new step only
+  when the completed result proves that a genuinely different piece of work is
+  still missing.
+- If the completed result satisfies the user's request and no work remains,
+  return an empty steps array. Never repeat the old pending steps in that case.
 
 Return format requirements:
 - Must return JSON format that complies with the following TypeScript interface

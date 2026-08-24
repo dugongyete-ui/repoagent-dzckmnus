@@ -134,6 +134,12 @@ class ExecutionAgent(BaseAgent):
         prompt = EXECUTION_PROMPT.format(
             step=step.description,
             message=message.message,
+            plan=plan.dump_json(),
+            completed_steps="\n".join(
+                f"- {completed.description}: {completed.result or '(completed without textual result)'}"
+                for completed in plan.steps
+                if completed.id != step.id and completed.is_done()
+            ) or "(none)",
             attachments="\\n".join(message.attachments),
             language=plan.language,
             user_home=user_home,

@@ -159,6 +159,8 @@ def test_execution_prompts_format_with_scoped_user_home():
 
     assert user_home in execution
     assert user_home in summary
+    assert "/tmp/extract.py" not in execution
+    assert "/tmp/extracted_content.txt" not in execution
     assert "/home/runner/summary_" not in summary
     assert "interface Response {" in summary
 

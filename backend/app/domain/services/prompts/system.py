@@ -48,10 +48,10 @@ You excel at the following tasks:
 - IMPORTANT — Pre-extracted files: If the user message contains <file name="...">...</file> tags, that file's full text content is already extracted and embedded in the message. Use it directly — do NOT write any extraction script, do NOT run any shell command for that file, do NOT look for the file in the sandbox.
 - For text/code/markdown files: use file_read tool directly
 - For binary files WITHOUT a <file> tag, NEVER give up and NEVER ask the user to re-upload. NEVER use python3 -c "..." inline commands — always write a script file first using the file_write tool, then execute it. Follow this exact workflow:
-  1. Use file_write tool to write the extraction script to /tmp/extract.py
-  2. Run the script with shell_exec: `python3 /tmp/extract.py`
-  3. Verify output: `ls -la /tmp/extracted_content.txt && head -20 /tmp/extracted_content.txt`
-  4. Read result with file_read tool on /tmp/extracted_content.txt
+  1. Use file_write tool to write the extraction script to {user_home}/extract.py
+  2. Run the script with shell_exec: `python3 {user_home}/extract.py`
+  3. Verify output: `ls -la {user_home}/extracted_content.txt && head -20 {user_home}/extracted_content.txt`
+  4. Read result with file_read tool on {user_home}/extracted_content.txt
 
   Script templates (write these with file_write, replacing FILE_PATH with actual path):
 
@@ -59,32 +59,32 @@ You excel at the following tasks:
     from pptx import Presentation
     prs = Presentation("FILE_PATH")
     lines = [sh.text for sl in prs.slides for sh in sl.shapes if hasattr(sh, "text") and sh.text.strip()]
-    open("/tmp/extracted_content.txt", "w").write("\n".join(lines))
+    open("{user_home}/extracted_content.txt", "w").write("\n".join(lines))
     print("Done:", len(lines), "text blocks extracted")
 
   For .docx / .doc:
     from docx import Document
     doc = Document("FILE_PATH")
     text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
-    open("/tmp/extracted_content.txt", "w").write(text)
+    open("{user_home}/extracted_content.txt", "w").write(text)
     print("Done:", len(doc.paragraphs), "paragraphs extracted")
 
   For .xlsx / .xls:
     import pandas as pd
     df = pd.read_excel("FILE_PATH")
-    open("/tmp/extracted_content.txt", "w").write(df.to_string())
+    open("{user_home}/extracted_content.txt", "w").write(df.to_string())
     print("Done:", df.shape)
 
   For .pdf:
-    Use shell command directly: `pdftotext FILE_PATH /tmp/extracted_content.txt`
+    Use shell command directly: `pdftotext FILE_PATH {user_home}/extracted_content.txt`
     Fallback script if pdftotext fails:
     import pdfplumber
     f = pdfplumber.open("FILE_PATH")
     text = "\n".join(p.extract_text() or "" for p in f.pages)
-    open("/tmp/extracted_content.txt", "w").write(text)
+    open("{user_home}/extracted_content.txt", "w").write(text)
     print("Done:", len(f.pages), "pages")
 
-  For .csv: `cp FILE_PATH /tmp/extracted_content.txt`
+  For .csv: `cp FILE_PATH {user_home}/extracted_content.txt`
   For unknown binary: run `file FILE_PATH` to detect type, then use the right template above
   Install missing packages if needed: `pip3 install python-pptx pdfplumber python-docx pandas openpyxl`
 </file_rules>

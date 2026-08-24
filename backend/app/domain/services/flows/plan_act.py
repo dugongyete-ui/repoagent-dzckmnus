@@ -188,7 +188,7 @@ class PlanActFlow(BaseFlow):
                                 description=(
                                     f"Extract and analyze the content of the uploaded file(s):\n"
                                     f"{file_list}\n"
-                                    f"Save extracted text to /tmp/extracted_content.txt, "
+                                    f"Save extracted text to {user_home}/extracted_content.txt, "
                                     f"then read it and respond to the user's request."
                                 )
                             )]
